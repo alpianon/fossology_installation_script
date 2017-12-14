@@ -1,2 +1,2 @@
-# fossology_installation_script
-Simple script to install Fossology from sources
+# Fossology installation script
+Simple script to install Fossology (and phppgadmin) from sources in Debian 9 (Stretch)
