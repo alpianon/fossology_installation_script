@@ -49,6 +49,8 @@ git clone https://github.com/fossology/fossology.git
 set -e
 cd fossology/
 
+echo ""
+echo ""
 echo "***************************************************"
 echo "*                    CLEANING...                  *"
 echo "***************************************************"
@@ -65,14 +67,37 @@ utils/fo-installdeps -y -e
 echo ""
 echo ""
 echo "***************************************************"
-echo "*                  COMPILING...                   *"
+echo "*           INSTALLING PHP COMPOSER...            *"
+echo "***************************************************"
+curl -sS https://getcomposer.org/installer | php && \
+    mv composer.phar /usr/local/bin/composer
+echo "composer.phar moved to /usr/local/bin/composer"
+
+echo ""
+echo ""
+echo "***************************************************"
+echo "*           INSTALLING SPDX TOOLS...              *"
+echo "***************************************************"
+install/scripts/install-spdx-tools.sh
+
+echo ""
+echo ""
+echo "***************************************************"
+echo "*           INSTALLING NINKA...                   *"
+echo "***************************************************"
+install/scripts/install-ninka.sh
+
+echo ""
+echo ""
+echo "***************************************************"
+echo "*            COMPILING FOSSOLOGY...               *"
 echo "***************************************************"
 make
 
 echo ""
 echo ""
 echo "***************************************************"
-echo "*                  INSTALLING...                  *"
+echo "*            INSTALLING FOSSOLOGY...              *"
 echo "***************************************************"
 make install
 
