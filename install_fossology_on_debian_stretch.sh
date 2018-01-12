@@ -117,6 +117,9 @@ EOF
 
 chmod 755 /etc/rc.local
 
+# https://serverfault.com/questions/203863/phppgadmin-exporting-empty-sql-dump
+sed -i -e 's/$cmd = $exe . " -i";/$cmd = $exe;/g' /usr/share/phppgadmin/dbexport.php
+
 echo ""
 echo ""
 echo "***************************************************"
