@@ -108,6 +108,15 @@ head -n -2 > phppgadmin.conf
 
 service apache2 restart
 service fossology restart
+
+cat <<EOF > /etc/rc.local
+#!/bin/sh
+sleep 10
+systemctl restart fossology.service
+EOF
+
+chmod 755 /etc/rc.local
+
 echo ""
 echo ""
 echo "***************************************************"
