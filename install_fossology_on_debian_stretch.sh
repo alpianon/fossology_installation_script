@@ -145,6 +145,11 @@ chmod 755 /etc/rc.local
 # https://serverfault.com/questions/203863/phppgadmin-exporting-empty-sql-dump
 sed -i -e 's/$cmd = $exe . " -i";/$cmd = $exe;/g' /usr/share/phppgadmin/dbexport.php
 
+# add all human users to fossy group, so that they can run fossology scripts
+USERS=`cut -d: -f1,3 /etc/passwd | egrep ':[0-9]{4}$' | cut -d: -f1`
+for i in $USERS; do usermod -a -G fossy $i; done
+
+
 echo ""
 echo ""
 echo "***************************************************"
