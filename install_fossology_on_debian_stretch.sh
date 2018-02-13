@@ -95,7 +95,7 @@ echo "***************************************************"
 
 # https://stackoverflow.com/questions/46378017/install-php5-6-in-debian-9
 # (But we cannot simply do apt install php5.6, you get errors!)
-apt-get install apt-transport-https lsb-release ca-certificates
+apt-get install -y apt-transport-https lsb-release ca-certificates
 wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
 echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list
 apt update
