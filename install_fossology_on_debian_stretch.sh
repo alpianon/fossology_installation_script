@@ -90,6 +90,26 @@ install/scripts/install-ninka.sh
 echo ""
 echo ""
 echo "***************************************************"
+echo "*    INSTALLING PHP 5.6 (SEEMS TO WORK BETTER)    *"
+echo "***************************************************"
+
+# https://stackoverflow.com/questions/46378017/install-php5-6-in-debian-9
+# (But we cannot simply do apt install php5.6, you get errors!)
+apt-get install apt-transport-https lsb-release ca-certificates
+wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
+echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list
+apt update
+apt install php5.6-cli php5.6-common php5.6-curl php5.6-gettext php5.6-json \
+ php5.6-mbstring php5.6-opcache php5.6-pgsql php5.6-readline php5.6-xml php-pear \
+ libapache2-mod-php5.6
+update-alternatives --set php /usr/bin/php5.6
+a2dismod php7.0
+a2enmod php5.6
+service apache2 restart
+
+echo ""
+echo ""
+echo "***************************************************"
 echo "*            COMPILING FOSSOLOGY...               *"
 echo "***************************************************"
 make
@@ -100,6 +120,7 @@ echo "***************************************************"
 echo "*            INSTALLING FOSSOLOGY...              *"
 echo "***************************************************"
 make install
+
 
 echo ""
 echo ""
@@ -155,4 +176,3 @@ echo ""
 echo "***************************************************"
 echo "*                      DONE!                      *"
 echo "***************************************************"
-
