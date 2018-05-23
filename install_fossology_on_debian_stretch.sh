@@ -134,7 +134,11 @@ cp install/src-install-apache-example.conf \
 ln -s /etc/apache2/sites-available/fossology.conf \
   /etc/apache2/sites-enabled/fossology.conf
 
+# patching php-conf-fix.sh script...
+sed -i.bak 's/php5\/apache2\/php.ini/php\/5.6\/apache2\/php.ini/' install/scripts/php-conf-fix.sh
 install/scripts/php-conf-fix.sh --overwrite
+# restoring original script...
+mv install/scripts/php-conf-fix.sh.bak install/scripts/php-conf-fix.sh
 
 a2enmod ssl
 a2ensite default-ssl
