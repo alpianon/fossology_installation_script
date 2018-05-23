@@ -100,7 +100,7 @@ wget -O /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
 echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list
 apt update
 apt install -y php5.6-cli php5.6-common php5.6-curl php5.6-gettext php5.6-json \
- php5.6-mbstring php5.6-opcache php5.6-pgsql php5.6-readline php5.6-xml php-pear \
+ php5.6-mbstring php5.6-opcache php5.6-pgsql php5.6-readline php5.6-xml php5.6-zip php-pear \
  libapache2-mod-php5.6
 update-alternatives --set php /usr/bin/php5.6
 a2dismod php7.0
