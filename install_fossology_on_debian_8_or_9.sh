@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Simple script to install Fossology from sources in Debian 9
-# Copyright (C) 2017 Alberto Pianon <pianon@array.eu>
+# Copyright (C) 2018 Alberto Pianon <pianon@array.eu>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

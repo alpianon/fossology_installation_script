@@ -16,12 +16,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+
+FOSSOLOGY_RELEASE="3.3.0"
+
 cp /etc/os-release .
 chmod +x os-release
 . "./os-release"
 rm os-release
-if [[ "$NAME $VERSION" != "Debian GNU/Linux 9 (stretch)" ]]; then
-  echo "This script must be run only in Debian 9 (stretch)"
+if [[ "$NAME $VERSION" != "Debian GNU/Linux 8 (jessie)" ]]; then
+  DEBIAN_VERSION="jessie"
+elif [[ "$NAME $VERSION" != "Debian GNU/Linux 9 (stretch)" ]]; then
+  DEBIAN_VERSION="stretch"
+else
+  echo "This script must be run only in Debian 8 or 9"
   exit 1
 fi
 
@@ -31,15 +38,24 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 
+echo ""
+echo ""
+echo "***************************************************"
+echo "*            UPDATING FOSSOLOGY REPO...            *"
+echo "***************************************************"
+set -e
+cd fossology/
+git pull
+git checkout tags/$FOSSOLOGY_RELEASE
 
 echo ""
 echo ""
 echo "***************************************************"
 echo "*                    CLEANING...                  *"
 echo "***************************************************"
-cd /fossology/
 utils/fo-cleanold
 make clean
+
 echo ""
 echo ""
 echo "***************************************************"
