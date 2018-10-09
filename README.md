@@ -1,5 +1,5 @@
 # Fossology installation script
-Simple script to install Fossology from sources and phppgadmin in Debian 9 (Stretch)
+Simple script to install Fossology from sources and phppgadmin in Debian 8 (Jessie) or 9 (Stretch)
 
 After installation, you can access Fossology at https://fossology_server_address/repo, and phppgadmin at https://fossology_server_address/phppgadmin 
 
