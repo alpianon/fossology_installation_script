@@ -23,9 +23,9 @@ cp /etc/os-release .
 chmod +x os-release
 . "./os-release"
 rm os-release
-if [[ "$NAME $VERSION" != "Debian GNU/Linux 8 (jessie)" ]]; then
+if [[ "$NAME $VERSION" == "Debian GNU/Linux 8 (jessie)" ]]; then
   DEBIAN_VERSION="jessie"
-elif [[ "$NAME $VERSION" != "Debian GNU/Linux 9 (stretch)" ]]; then
+elif [[ "$NAME $VERSION" == "Debian GNU/Linux 9 (stretch)" ]]; then
   DEBIAN_VERSION="stretch"
 else
   echo "This script must be run only in Debian 8 or 9"
