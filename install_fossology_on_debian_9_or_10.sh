@@ -5,7 +5,7 @@
 # Simple script to install Fossology from sources in Debian 9-10
 
 
-fossy_release="${FOSSOLOGY_RELEASE:-3.8.1}"
+fossy_release="${FOSSOLOGY_RELEASE:-3.9.0-rc2}"
 
 cp /etc/os-release .
 chmod +x os-release
