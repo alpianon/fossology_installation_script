@@ -30,7 +30,8 @@ echo "***************************************************"
 echo "*            UPDATING FOSSOLOGY REPO...            *"
 echo "***************************************************"
 set -e
-cd fossology/
+cd /fossology/
+git checkout master
 git pull
 git checkout tags/$fossy_release
 
