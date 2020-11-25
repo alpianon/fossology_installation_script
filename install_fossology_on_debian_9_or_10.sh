@@ -153,7 +153,7 @@ EOT
 #https://github.com/fossology/fossology/wiki/Email-notification-configuration#setting-up-the-email-client
 wget http://ftp.us.debian.org/debian/pool/main/s/s-nail/heirloom-mailx_14.8.16-1_all.deb
 apt install ./heirloom-mailx_14.8.16-1_all.deb
-ln -s /usr/bin/heirloom-mailx /usr/bin/mail
+ln -s /usr/bin/heirloom-mailx /usr/bin/mailx
 
 echo ""
 echo ""
