@@ -1,34 +1,18 @@
 #!/bin/bash
-
-# Simple script to update Fossology from sources in Debian 9
-# Copyright (C) 2018 Alberto Pianon <pianon@array.eu>
+# SPDX-License-Identifier: GPL-3.0-only
+# SPDX-FileCopyrightText: 2020 Alberto Pianon <pianon@array.eu>
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# Simple script to install Fossology from sources in Debian 9-10
 
 
-FOSSOLOGY_RELEASE="3.3.0"
+fossy_release="${FOSSOLOGY_RELEASE:-3.8.1}"
 
 cp /etc/os-release .
 chmod +x os-release
 . "./os-release"
 rm os-release
-if [[ "$NAME $VERSION" == "Debian GNU/Linux 8 (jessie)" ]]; then
-  DEBIAN_VERSION="jessie"
-elif [[ "$NAME $VERSION" == "Debian GNU/Linux 9 (stretch)" ]]; then
-  DEBIAN_VERSION="stretch"
-else
-  echo "This script must be run only in Debian 8 or 9"
+if [[ "$NAME $VERSION" != "Debian GNU/Linux 9 (stretch)" ]] && [[ "$NAME $VERSION" != "Debian GNU/Linux 10 (buster)" ]]; then
+  echo "This script must be run only in Debian 9 or 10"
   exit 1
 fi
 
@@ -37,6 +21,8 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
+# workaround for this Debian 10 issue https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=918754
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 echo ""
 echo ""
@@ -46,7 +32,7 @@ echo "***************************************************"
 set -e
 cd fossology/
 git pull
-git checkout tags/$FOSSOLOGY_RELEASE
+git checkout tags/$fossy_release
 
 echo ""
 echo ""
@@ -62,42 +48,34 @@ echo "***************************************************"
 echo "*           INSTALLING NEW FOSSOLOGY DEPS...      *"
 echo "***************************************************"
 utils/fo-installdeps -y -e
-echo ""
-echo ""
-echo "***************************************************"
-echo "*           UPDATING PHP COMPOSER...              *"
-echo "***************************************************"
-curl -sS https://getcomposer.org/installer | php &&     mv composer.phar /usr/local/bin/composer
-echo ""
-echo ""
-echo "***************************************************"
-echo "*           REINSTALLING SPDX TOOLS...            *"
-echo "***************************************************"
-install/scripts/install-spdx-tools.sh
-echo ""
-echo ""
-echo "***************************************************"
-echo "*           INSTALLING NINKA...                   *"
-echo "***************************************************"
-install/scripts/install-ninka.sh
+
 echo ""
 echo ""
 echo "***************************************************"
 echo "*            COMPILING FOSSOLOGY...               *"
 echo "***************************************************"
 make
+
+echo "***************************************************"
+echo "*           UPDATING PHP COMPOSER...            *"
+echo "***************************************************"
+utils/install_composer.sh
+
 echo ""
 echo ""
 echo "***************************************************"
 echo "*        INSTALLING/UPDATING FOSSOLOGY...         *"
 echo "***************************************************"
 make install
+
+
 echo ""
 echo ""
 echo "***************************************************"
 echo "*              POST INSTALL STUFF...              *"
 echo "***************************************************"
 /usr/local/lib/fossology/fo-postinstall
+
 echo ""
 echo ""
 echo "***************************************************"
