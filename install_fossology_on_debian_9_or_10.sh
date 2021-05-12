@@ -150,12 +150,14 @@ EOT
 #https://github.com/fossology/fossology/wiki/Configuration-and-Tuning#configuring-php
 /fossology/install/scripts/php-conf-fix.sh --overwrite
 
+PHP_PATH=$(php --ini | awk '/\/etc\/php.*\/cli$/{print $5}')
+phpIni="${PHP_PATH}/../apache2/php.ini"
 sed \
   -i.bak \
   -e "s/upload_max_filesize = 700M/upload_max_filesize = 1000M/" \
   -e "s/post_max_size = 701M/post_max_size = 1004M/" \
   -e "s/memory_limit = 702M/memory_limit = 1010M/" \
-  /etc/php/7.3/apache2/php.ini
+  $phpIni
 
 #https://github.com/fossology/fossology/wiki/Email-notification-configuration#setting-up-the-email-client
 wget http://ftp.us.debian.org/debian/pool/main/s/s-nail/heirloom-mailx_14.8.16-1_all.deb
