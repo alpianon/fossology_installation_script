@@ -6,7 +6,7 @@ SPDX-FileCopyrightText: 2020-2021 Alberto Pianon <pianon@array.eu>
 
 # Fossology installation script
 
-Simple script to install Fossology from sources in Debian 9 (Stretch) or 10 (Buster), and adjust server settings according to Fossology's [official documentation](https://github.com/fossology/fossology/wiki/Configuration-and-Tuning).
+Simple script to install Fossology 3.9.0 from sources in Debian 9 (Stretch) or 10 (Buster), and adjust server settings according to Fossology's [official documentation](https://github.com/fossology/fossology/wiki/Configuration-and-Tuning).
 
 Settings are tweaked and some dependency code is patched in order to enable Fossology to import huge spdx report files.
 
@@ -19,7 +19,7 @@ In case you change postgres DB password, you have to put the new DB password in 
 
 ## Docker
 
-The included `Dockerfile` and `docker-entrypoint.sh` files can be used to create a Fossology docker image that has the same tweaks and patches that are provided by the installation script.
+The included `Dockerfile` and `docker-entrypoint.sh` files can be used to create a Fossology 3.9.0 docker image that has the same tweaks and patches that are provided by the installation script.
 
 ```shell
 docker build -t fossology_optimized .
