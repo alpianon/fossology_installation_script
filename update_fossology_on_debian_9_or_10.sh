@@ -1,6 +1,6 @@
 #!/bin/bash
 # SPDX-License-Identifier: GPL-3.0-only
-# SPDX-FileCopyrightText: 2020 Alberto Pianon <pianon@array.eu>
+# SPDX-FileCopyrightText: 2020-2021 Alberto Pianon <pianon@array.eu>
 #
 # Simple script to install Fossology from sources in Debian 9-10
 

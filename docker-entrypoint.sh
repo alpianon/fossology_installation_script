@@ -1,4 +1,10 @@
 #!/bin/bash
+
+# SPDX-License-Identifier: FSFAP
+# SPDX-FileCopyrightText: 2016 Siemens AG <fabio.huser@siemens.com>
+# SPDX-FileCopyrightText: 2016 TNG Technology Consulting GmbH <maximilian.huber@tngtech.com>
+# SPDX-FileCopyrightText: 2021 Alberto Pianon <pianon@array.eu>
+
 # FOSSology docker-entrypoint script
 # Copyright Siemens AG 2016, fabio.huser@siemens.com
 # Copyright TNG Technology Consulting GmbH 2016, maximilian.huber@tngtech.com
@@ -53,7 +59,7 @@ if [[ $# -eq 0 || ($# -eq 1 && "$1" == "scheduler") ]]; then
   /usr/local/lib/fossology/fo-postinstall --common --database --licenseref
 fi
 
-### Addition (c) 2021 by Alberto Pianon <pianon@array.eu>
+### Begin code snippet by Alberto Pianon <pianon@array.eu>
 
 #***************************************************
 #*    PATCHING EASYRDF TO IMPORT BIG SPDX FILES    *
@@ -116,7 +122,7 @@ EOT
 sleep 5
 /etc/init.d/postgresql start
 
-### End addition (c) 2021 by Alberto Pianon <pianon@array.eu>
+### End code snippet by Alberto Pianon <pianon@array.eu>
 
 # Start Fossology
 echo

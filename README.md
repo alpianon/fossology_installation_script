@@ -1,3 +1,9 @@
+<!--
+SPDX-License-Identifier: GPL-3.0-only
+SPDX-FileCopyrightText: 2020-2021 Alberto Pianon <pianon@array.eu>
+-->
+
+
 # Fossology installation script
 
 Simple script to install Fossology from sources in Debian 9 (Stretch) or 10 (Buster), and adjust server settings according to Fossology's [official documentation](https://github.com/fossology/fossology/wiki/Configuration-and-Tuning).

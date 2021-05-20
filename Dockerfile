@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: FSFAP
+# SPDX-FileCopyrightText: 2021 Alberto Pianon <pianon@array.eu>
+
 FROM fossology/fossology:3.9.0
 
 COPY ./docker-entrypoint.sh /fossology/docker-entrypoint.sh
