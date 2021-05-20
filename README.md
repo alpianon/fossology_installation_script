@@ -1,9 +1,50 @@
 # Fossology installation script
-Simple script to install Fossology from sources and phppgadmin in Debian 9 (Stretch) or 10 (Buster), and adjust server settings according to Fossology's [official documentation](https://github.com/fossology/fossology/wiki/Configuration-and-Tuning).
 
-After installation, you can access Fossology at https://{fossology_server_address}/repo, and phppgadmin at https://{fossology_server_address}/phppgadmin
+Simple script to install Fossology from sources in Debian 9 (Stretch) or 10 (Buster), and adjust server settings according to Fossology's [official documentation](https://github.com/fossology/fossology/wiki/Configuration-and-Tuning).
+
+Settings are tweaked and some dependency code is patched in order to enable Fossology to import huge spdx report files.
+
+After installation, you can access Fossology at https://{fossology_server_address}/repo.
 
 Default user/password both for Fossology and for the Postgres DB are fossy/fossy.
 
-You may want to change default password both in Fossology and in Postgres DB (because DB can be accessed via phppgadmin):
+You may want to change default password both in Fossology and in Postgres DB.
 In case you change postgres DB password, you have to put the new DB password in `/usr/local/etc/fossology/Db.conf`, otherwise Fossology will not work.
+
+## Docker
+
+The included `Dockerfile` and `docker-entrypoint.sh` files can be used to create a Fossology docker image that has the same tweaks and patches that are provided by the installation script.
+
+```shell
+docker build -t fossology_optimized .
+```
+
+Then the docker container can be created and launched with:
+
+```shell
+docker run -d \
+  --name myfossy \
+  -p 127.0.0.1:80:80 \
+  -p 443:443 \
+  fossology_optimized
+```
+
+If you need data persistency, you should create a volume for `/var` (mainly for the database) and a volume for `/srv` (for files stored by Fossology):
+
+```shell
+docker volume create fossy-var
+docker volume create fossy-srv
+docker run -d \
+  --name myfossy \
+  --mount source=fossy-var,target=/var \
+  --mount source=fossy-srv,target=/srv \
+  -p 127.0.0.1:80:80 \
+  -p 443:443 \
+  fossology_optimized
+```
+
+## Phppgadmin
+
+In a previous version of the installation script, also phppgadmin was installed, in order to allow easier inspection of Fossology's database.
+
+However, phpggadmin currently suffers of [security issues](https://github.com/phppgadmin/phppgadmin/issues/94), so the related part was commented out in the installation script. If you decide to install it anyway, because you are able to add a security layer to protect it, feel free uncomment that part.
