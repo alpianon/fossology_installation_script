@@ -103,20 +103,25 @@ awk -vRS="AllowOverride None" -vORS="AllowOverride None\n\tSSLRequireSSL" '1' \
  fossology.conf.bak | head -n -2 > fossology.conf
 service apache2 restart
 
-echo ""
-echo ""
-echo "***************************************************"
-echo "*              INSTALLING PHPPGADMIN...           *"
-echo "***************************************************"
+# phpggadmin currently suffers of security issues
+# (https://github.com/phppgadmin/phppgadmin/issues/94), so this part is
+# commented out. If you decide to install it anyway, because you are able to add
+# a security layer to protect it, feel free uncomment this part.
 
-apt install -y phppgadmin
-cd /etc/apache2/conf-available/
-mv phppgadmin.conf phppgadmin.conf.bak
-sed -e 's/Require local/# Require local/' phppgadmin.conf.bak | \
-awk -vRS="<Directory /usr/share/phppgadmin>"  \
-    -vORS="<Directory /usr/share/phppgadmin>\nSSLRequireSSL" '1' | \
-head -n -2 > phppgadmin.conf
-service apache2 restart
+#echo ""
+#echo ""
+#echo "***************************************************"
+#echo "*              INSTALLING PHPPGADMIN...           *"
+#echo "***************************************************"
+#
+#apt install -y phppgadmin
+#cd /etc/apache2/conf-available/
+#mv phppgadmin.conf phppgadmin.conf.bak
+#sed -e 's/Require local/# Require local/' phppgadmin.conf.bak | \
+#awk -vRS="<Directory /usr/share/phppgadmin>"  \
+#    -vORS="<Directory /usr/share/phppgadmin>\nSSLRequireSSL" '1' | \
+#head -n -2 > phppgadmin.conf
+#service apache2 restart
 
 echo ""
 echo ""
