@@ -53,8 +53,12 @@ if [[ $# -eq 0 || ($# -eq 1 && "$1" == "scheduler") ]]; then
   /usr/local/lib/fossology/fo-postinstall --common --database --licenseref
 fi
 
-##########################################################################
+### Addition (c) 2021 by Alberto Pianon <pianon@array.eu>
 
+#***************************************************
+#*    PATCHING EASYRDF TO IMPORT BIG SPDX FILES    *
+#*    (bugfix backport from v1.1.1 to v.0.9.0)     *
+#***************************************************
 cd /usr/local/share/fossology/vendor/easyrdf/easyrdf/lib/EasyRdf/Parser
 (patch -p1 << EOT
 --- a/RdfXml.php
@@ -94,6 +98,7 @@ EOT
 ) || true
 cd -
 
+#https://github.com/fossology/fossology/wiki/Configuration-and-Tuning#preparing-postgresql
 mem=$(free --giga | grep Mem | awk '{print $2}')
 su - postgres -c psql <<EOT
 ALTER SYSTEM set shared_buffers = '$(( mem / 4 ))GB';
@@ -107,7 +112,11 @@ ALTER SYSTEM set standard_conforming_strings = 'on';
 ALTER SYSTEM set autovacuum = 'on';
 EOT
 
-##########################################################################
+/etc/init.d/postgresql stop
+sleep 5
+/etc/init.d/postgresql start
+
+### End addition (c) 2021 by Alberto Pianon <pianon@array.eu>
 
 # Start Fossology
 echo
