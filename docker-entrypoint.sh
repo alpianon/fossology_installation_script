@@ -104,23 +104,25 @@ EOT
 ) || true
 cd -
 
-#https://github.com/fossology/fossology/wiki/Configuration-and-Tuning#preparing-postgresql
-mem=$(free --giga | grep Mem | awk '{print $2}')
-su - postgres -c psql <<EOT
-ALTER SYSTEM set shared_buffers = '$(( mem / 4 ))GB';
-ALTER SYSTEM set effective_cache_size = '$(( mem / 2 ))GB';
-ALTER SYSTEM set maintenance_work_mem = '$(( mem * 50 ))MB';
-ALTER SYSTEM set work_mem = '128MB';
-ALTER SYSTEM set fsync = 'on';
-ALTER SYSTEM set full_page_writes = 'off';
-ALTER SYSTEM set log_line_prefix = '%t %h %c';
-ALTER SYSTEM set standard_conforming_strings = 'on';
-ALTER SYSTEM set autovacuum = 'on';
+if [[ $db_host == 'localhost' ]]; then
+  #https://github.com/fossology/fossology/wiki/Configuration-and-Tuning#preparing-postgresql
+  mem=$(free --giga | grep Mem | awk '{print $2}')
+  su - postgres -c psql <<EOT
+  ALTER SYSTEM set shared_buffers = '$(( mem / 4 ))GB';
+  ALTER SYSTEM set effective_cache_size = '$(( mem / 2 ))GB';
+  ALTER SYSTEM set maintenance_work_mem = '$(( mem * 50 ))MB';
+  ALTER SYSTEM set work_mem = '128MB';
+  ALTER SYSTEM set fsync = 'on';
+  ALTER SYSTEM set full_page_writes = 'off';
+  ALTER SYSTEM set log_line_prefix = '%t %h %c';
+  ALTER SYSTEM set standard_conforming_strings = 'on';
+  ALTER SYSTEM set autovacuum = 'on';
 EOT
 
-/etc/init.d/postgresql stop
-sleep 5
-/etc/init.d/postgresql start
+  /etc/init.d/postgresql stop
+  sleep 5
+  /etc/init.d/postgresql start
+fi
 
 ### End code snippet by Alberto Pianon <pianon@array.eu>
 
