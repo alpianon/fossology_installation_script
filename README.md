@@ -8,7 +8,7 @@ SPDX-FileCopyrightText: 2020-2021 Alberto Pianon <pianon@array.eu>
 
 Simple script to install Fossology 3.9.0 from sources in Debian 9 (Stretch) or 10 (Buster), and adjust server settings according to Fossology's [official documentation](https://github.com/fossology/fossology/wiki/Configuration-and-Tuning).
 
-Settings are tweaked and some dependency code is patched in order to enable Fossology to import huge spdx report files.
+Settings are tweaked and some dependency code is patched in order to enable Fossology to import huge spdx report files. Moreover, a known bug in job rest API is fixed, in order to get correct job status (see the comments in the script for more details).
 
 After installation, you can access Fossology at https://{fossology_server_address}/repo.
 
