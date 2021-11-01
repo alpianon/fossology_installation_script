@@ -274,6 +274,7 @@ echo ""
 echo "***************************************************"
 echo "*    PATCHING REST API to correctly use           *"
 echo "*    group ID for uploads and jobs                *"
+echo "*    and to get job queue agent names             *"
 echo "***************************************************"
 
 cd /usr/local/share
@@ -292,13 +293,22 @@ diff -ruN fossology.orig/fossology/lib/php/Dao/UploadDao.php fossology.mod/fosso
        }
 diff -ruN fossology.orig/fossology/www/ui/api/Controllers/JobController.php fossology.mod/fossology/www/ui/api/Controllers/JobController.php
 --- fossology.orig/fossology/www/ui/api/Controllers/JobController.php	2021-11-01 10:30:17.000000000 +0100
-+++ fossology.mod/fossology/www/ui/api/Controllers/JobController.php	2021-11-01 21:13:25.000000000 +0100
++++ fossology.mod/fossology/www/ui/api/Controllers/JobController.php	2021-11-01 23:40:22.000000000 +0100
 @@ -178,7 +178,7 @@
     */
    private function getAllResults(\$id, \$response, \$limit, \$page)
    {
 -    list(\$jobs, \$count) = \$this->dbHelper->getJobs(\$id, \$limit, \$page);
 +    list(\$jobs, \$count) = \$this->dbHelper->getJobs(\$id, \$limit, \$page, null, \$this->restHelper->getGroupId());
+     \$finalJobs = [];
+     foreach (\$jobs as \$job) {
+       \$this->updateEtaAndStatus(\$job);
+@@ -206,7 +206,7 @@
+         InfoType::ERROR);
+       return \$response->withJson(\$returnVal->getArray(), \$returnVal->getCode());
+     }
+-    list(\$jobs, \$count) = \$this->dbHelper->getJobs(null, \$limit, \$page, \$uploadId);
++    list(\$jobs, \$count) = \$this->dbHelper->getJobs(null, \$limit, \$page, \$uploadId, \$this->restHelper->getGroupId());
      \$finalJobs = [];
      foreach (\$jobs as \$job) {
        \$this->updateEtaAndStatus(\$job);
@@ -316,7 +326,7 @@ diff -ruN fossology.orig/fossology/www/ui/api/Controllers/UploadController.php f
      }
 diff -ruN fossology.orig/fossology/www/ui/api/Helper/DbHelper.php fossology.mod/fossology/www/ui/api/Helper/DbHelper.php
 --- fossology.orig/fossology/www/ui/api/Helper/DbHelper.php	2020-12-01 10:20:09.000000000 +0100
-+++ fossology.mod/fossology/www/ui/api/Helper/DbHelper.php	2021-11-01 21:28:49.000000000 +0100
++++ fossology.mod/fossology/www/ui/api/Helper/DbHelper.php	2021-11-02 00:07:25.000000000 +0100
 @@ -77,7 +77,7 @@
     * @param integer \$uploadId Pass the upload id to check for single upload.
     * @return Upload[][] Uploads as an associative array
@@ -363,16 +373,24 @@ diff -ruN fossology.orig/fossology/www/ui/api/Helper/DbHelper.php fossology.mod/
      }
      \$result = \$this->dbManager->getRows(\$sql, \$params, \$statementName);
      \$uploads = [];
-@@ -212,7 +222,7 @@
+@@ -212,28 +222,34 @@
     * @return array[] List of jobs at first index and total number of pages at
     *         second.
     */
 -  public function getJobs(\$id = null, \$limit = 0, \$page = 1, \$uploadId = null)
 +  public function getJobs(\$id = null, \$limit = 0, \$page = 1, \$uploadId = null, \$groupId = 0)
    {
-     \$jobSQL = "SELECT job_pk, job_queued, job_name, job_upload_fk," .
-       " job_user_fk, job_group_fk FROM job";
-@@ -222,18 +232,21 @@
+-    \$jobSQL = "SELECT job_pk, job_queued, job_name, job_upload_fk," .
+-      " job_user_fk, job_group_fk FROM job";
+-    \$totalJobSql = "SELECT count(*) AS cnt FROM job";
++    \$jobSQL = "SELECT j.job_pk, j.job_queued, string_agg(jq.jq_type, ',') as job_name," .
++      " j.job_upload_fk, j.job_user_fk, j.job_group_fk FROM job j" .
++      " INNER JOIN jobqueue jq ON j.job_pk = jq.jq_job_fk ";
++    \$totalJobSql = "SELECT count(*) AS cnt FROM job j";
++
++    \$groupBy = "GROUP BY j.job_pk, j.job_queued, j.job_upload_fk, j.job_user_fk, j.job_group_fk";
+ 
+     \$filter = "";
      \$pagination = "";
  
      \$params = [];
@@ -383,19 +401,28 @@ diff -ruN fossology.orig/fossology/www/ui/api/Helper/DbHelper.php fossology.mod/
        if (\$uploadId !== null) {
          \$params[] = \$uploadId;
 -        \$filter = "WHERE job_upload_fk = \$" . count(\$params);
-+        \$filter = "WHERE job_upload_fk = \$" . count(\$params) . " AND job_group_fk = \$1";
++        \$filter = "WHERE j.job_upload_fk = \$2 AND j.job_group_fk = \$1";
          \$statement .= ".withUploadFilter";
          \$countStatement .= ".withUploadFilter";
 +      } else {
-+        \$filter = "WHERE job_group_fk = \$1";
++        \$filter = "WHERE j.job_group_fk = \$1";
        }
      } else {
        \$params[] = \$id;
 -      \$filter = "WHERE job_pk = \$" . count(\$params);
-+      \$filter = "WHERE job_pk = \$" . count(\$params) . " AND job_group_fk = \$1";
++      \$filter = "WHERE j.job_pk = \$2 AND j.job_group_fk = \$1";
        \$statement .= ".withJobFilter";
        \$countStatement .= ".withJobFilter";
      }
+@@ -256,7 +272,7 @@
+     }
+ 
+     \$jobs = [];
+-    \$result = \$this->dbManager->getRows("\$jobSQL \$filter \$pagination;", \$params,
++    \$result = \$this->dbManager->getRows("\$jobSQL \$filter \$groupBy \$pagination;", \$params,
+       \$statement);
+     foreach (\$result as \$row) {
+       \$job = new Job(\$row["job_pk"]);
 EOT
 cd -
 
