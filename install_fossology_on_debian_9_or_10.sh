@@ -272,6 +272,58 @@ cd -
 echo ""
 echo ""
 echo "***************************************************"
+echo "*    Backporting fix to Reuser agent              *"
+echo "*    from Fossology 3.10                          *"
+echo "***************************************************"
+
+# this is the bug https://github.com/fossology/fossology/issues/1411
+# and this is the fix https://github.com/fossology/fossology/pull/1879/files
+
+cd /usr/local/share/fossology/reuser/agent
+patch -p1 << EOT
+--- a/ReuserAgent.php 2021-11-26 17:40:53.208176627 +0000
++++ b/ReuserAgent.php 2021-11-04 05:36:05.268477843 +0000
+@@ -271,6 +271,9 @@
+ 
+     foreach (\$containedItems as \$item) {
+       \$fileId = \$item->getFileId();
++      if (empty(\$fileId)) {
++        continue;
++      }
+       if (array_key_exists(\$fileId, \$clearingDecisionToImportByFileId)) {
+         \$this->createCopyOfClearingDecision(\$item->getId(), \$userId, \$groupId,
+           \$clearingDecisionToImportByFileId[\$fileId]);
+@@ -309,11 +312,18 @@
+ 
+     foreach (\$clearingDecisionsToImport as \$clearingDecision) {
+       \$reusedPath = \$treeDao->getRepoPathOfPfile(\$clearingDecision->getPfileId());
+-
++      if (empty(\$reusedPath)) {
++        // File missing from repo
++        continue;
++      }
+       \$res = \$this->dbManager->execute(\$stmt,array(\$itemTreeBounds->getUploadId(),
+         \$itemTreeBoundsReused->getUploadId(),\$clearingDecision->getPfileId()));
+       while (\$row = \$this->dbManager->fetchArray(\$res)) {
+         \$newPath = \$treeDao->getRepoPathOfPfile(\$row['pfile_fk']);
++        if (empty(\$newPath)) {
++          // File missing from repo
++          continue;
++        }
+         \$this->copyClearingDecisionIfDifferenceIsSmall(\$reusedPath, \$newPath, \$clearingDecision, \$row['uploadtree_pk']);
+       }
+       \$this->dbManager->freeResult(\$res);
+@@ -416,4 +426,3 @@
+     return \$mapped;
+   }
+ }
+-
+EOT
+cd -
+
+echo ""
+echo ""
+echo "***************************************************"
 echo "*         ENABLING FOSSOLOGY SCHEDULER...         *"
 echo "***************************************************"
 
