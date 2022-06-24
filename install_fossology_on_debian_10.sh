@@ -4,15 +4,14 @@
 #
 # Simple script to install Fossology from sources in Debian 9-10
 
-
-fossy_release="${FOSSOLOGY_RELEASE:-3.9.0}"
+fossy_release="${FOSSY_RELEASE:-4.1.0}"
 
 cp /etc/os-release .
 chmod +x os-release
 . "./os-release"
 rm os-release
-if [[ "$NAME $VERSION" != "Debian GNU/Linux 9 (stretch)" ]] && [[ "$NAME $VERSION" != "Debian GNU/Linux 10 (buster)" ]]; then
-  echo "This script must be run only in Debian 9 or 10"
+if [[ "$NAME $VERSION" != "Debian GNU/Linux 10 (buster)" ]]; then
+  echo "This script must be run only in Debian 10"
   exit 1
 fi
 
@@ -21,14 +20,12 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-# workaround for this Debian 10 issue https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=918754
-export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-
 echo ""
 echo ""
 echo "***************************************************"
 echo "*            INSTALLING SCRIPT DEPS...            *"
 echo "***************************************************"
+apt update
 apt install -y sudo build-essential git pkg-config libpq-dev libglib2.0-dev \
   mc mawk sed software-properties-common lsb-release
 apt-add-repository non-free
@@ -71,13 +68,6 @@ make
 echo ""
 echo ""
 echo "***************************************************"
-echo "*           INSTALLING PHP COMPOSER...            *"
-echo "***************************************************"
-utils/install_composer.sh
-
-echo ""
-echo ""
-echo "***************************************************"
 echo "*            INSTALLING FOSSOLOGY...              *"
 echo "***************************************************"
 make install
@@ -88,11 +78,13 @@ echo ""
 echo "***************************************************"
 echo "*              POST INSTALL STUFF...              *"
 echo "***************************************************"
+python3 -m pip install pip==21.2.2
 /usr/local/lib/fossology/fo-postinstall
 
-# add all human users to fossy group, so that they can run fossology CLI commands
-USERS=`cut -d: -f1,3 /etc/passwd | egrep ':[0-9]{4}$' | cut -d: -f1`
-for i in $USERS; do usermod -a -G fossy $i; done
+su - fossy -c 'echo "import warnings
+warnings.simplefilter(action=\"ignore\", category=FutureWarning)
+$(cat /home/fossy/pythondeps/scancode/cli.py)
+" > /home/fossy/pythondeps/scancode/cli.py'
 
 a2enmod ssl
 a2ensite default-ssl
@@ -103,25 +95,23 @@ awk -vRS="AllowOverride None" -vORS="AllowOverride None\n\tSSLRequireSSL" '1' \
  fossology.conf.bak | head -n -2 > fossology.conf
 service apache2 restart
 
-# phpggadmin currently suffers of security issues
-# (https://github.com/phppgadmin/phppgadmin/issues/94), so this part is
-# commented out. If you decide to install it anyway, because you are able to add
-# a security layer to protect it, feel free uncomment this part.
+if [[ -n "$FOSSY_ENABLE_PHPPGADMIN" ]]; then
+  echo ""
+  echo ""
+  echo "***************************************************"
+  echo "*              INSTALLING PHPPGADMIN...           *"
+  echo "***************************************************"
 
-#echo ""
-#echo ""
-#echo "***************************************************"
-#echo "*              INSTALLING PHPPGADMIN...           *"
-#echo "***************************************************"
-#
-#apt install -y phppgadmin
-#cd /etc/apache2/conf-available/
-#mv phppgadmin.conf phppgadmin.conf.bak
-#sed -e 's/Require local/# Require local/' phppgadmin.conf.bak | \
-#awk -vRS="<Directory /usr/share/phppgadmin>"  \
-#    -vORS="<Directory /usr/share/phppgadmin>\nSSLRequireSSL" '1' | \
-#head -n -2 > phppgadmin.conf
-#service apache2 restart
+  apt install -y phppgadmin
+  cd /etc/apache2/conf-available/
+  mv phppgadmin.conf phppgadmin.conf.bak
+  sed -e 's/Require local/# Require local/' phppgadmin.conf.bak | \
+  awk -vRS="<Directory /usr/share/phppgadmin>"  \
+      -vORS="<Directory /usr/share/phppgadmin>\nSSLRequireSSL" '1' | \
+  head -n -2 > phppgadmin.conf
+  service apache2 restart
+  cd -
+fi
 
 echo ""
 echo ""
@@ -165,53 +155,9 @@ sed \
   $phpIni
 
 #https://github.com/fossology/fossology/wiki/Email-notification-configuration#setting-up-the-email-client
-wget http://ftp.us.debian.org/debian/pool/main/s/s-nail/heirloom-mailx_14.8.16-1_all.deb
-apt install ./heirloom-mailx_14.8.16-1_all.deb
-ln -s /usr/bin/heirloom-mailx /usr/bin/mailx
-
-echo ""
-echo ""
-echo "***************************************************"
-echo "*    PATCHING EASYRDF TO IMPORT BIG SPDX FILES    *"
-echo "*    (bugfix backport from v1.1.1 to v.0.9.0)     *"
-echo "***************************************************"
-cd /usr/local/share/fossology/vendor/easyrdf/easyrdf/lib/EasyRdf/Parser
-patch -p1 << EOT
---- a/RdfXml.php
-+++ b/RdfXml.php
-@@ -795,14 +795,22 @@
-         /* xml parser */
-         \$this->initXMLParser();
-
--        /* parse */
--        if (!xml_parse(\$this->xmlParser, \$data, false)) {
--            \$message = xml_error_string(xml_get_error_code(\$this->xmlParser));
--            throw new EasyRdf_Parser_Exception(
--                'XML error: "' . \$message . '"',
--                xml_get_current_line_number(\$this->xmlParser),
--                xml_get_current_column_number(\$this->xmlParser)
--            );
-+        /* split into 1MB chunks, so XML parser can cope */
-+        \$chunkSize = 1000000;
-+        \$length = strlen(\$data);
-+        for (\$pos=0; \$pos < \$length; \$pos += \$chunkSize) {
-+            \$chunk = substr(\$data, \$pos, \$chunkSize);
-+            \$isLast = (\$pos + \$chunkSize > \$length);
-+
-+            /* Parse the chunk */
-+            if (!xml_parse(\$this->xmlParser, \$chunk, \$isLast)) {
-+                \$message = xml_error_string(xml_get_error_code(\$this->xmlParser));
-+                throw new Exception(
-+                    'XML error: "' . \$message . '"',
-+                    xml_get_current_line_number(\$this->xmlParser),
-+                    xml_get_current_column_number(\$this->xmlParser)
-+                );
-+            }
-         }
-
-         xml_parser_free(\$this->xmlParser);
-EOT
-cd -
+# but see also https://github.com/fossology/fossology/issues/1614
+apt install s-nail
+ln -s /usr/bin/s-nail /usr/bin/mailx
 
 echo ""
 echo ""
@@ -266,58 +212,6 @@ patch -p1 << EOT
    }
 
    /**
-EOT
-cd -
-
-echo ""
-echo ""
-echo "***************************************************"
-echo "*    Backporting fix to Reuser agent              *"
-echo "*    from Fossology 3.10                          *"
-echo "***************************************************"
-
-# this is the bug https://github.com/fossology/fossology/issues/1411
-# and this is the fix https://github.com/fossology/fossology/pull/1879/files
-
-cd /usr/local/share/fossology/reuser/agent
-patch -p1 << EOT
---- a/ReuserAgent.php 2021-11-26 17:40:53.208176627 +0000
-+++ b/ReuserAgent.php 2021-11-04 05:36:05.268477843 +0000
-@@ -271,6 +271,9 @@
- 
-     foreach (\$containedItems as \$item) {
-       \$fileId = \$item->getFileId();
-+      if (empty(\$fileId)) {
-+        continue;
-+      }
-       if (array_key_exists(\$fileId, \$clearingDecisionToImportByFileId)) {
-         \$this->createCopyOfClearingDecision(\$item->getId(), \$userId, \$groupId,
-           \$clearingDecisionToImportByFileId[\$fileId]);
-@@ -309,11 +312,18 @@
- 
-     foreach (\$clearingDecisionsToImport as \$clearingDecision) {
-       \$reusedPath = \$treeDao->getRepoPathOfPfile(\$clearingDecision->getPfileId());
--
-+      if (empty(\$reusedPath)) {
-+        // File missing from repo
-+        continue;
-+      }
-       \$res = \$this->dbManager->execute(\$stmt,array(\$itemTreeBounds->getUploadId(),
-         \$itemTreeBoundsReused->getUploadId(),\$clearingDecision->getPfileId()));
-       while (\$row = \$this->dbManager->fetchArray(\$res)) {
-         \$newPath = \$treeDao->getRepoPathOfPfile(\$row['pfile_fk']);
-+        if (empty(\$newPath)) {
-+          // File missing from repo
-+          continue;
-+        }
-         \$this->copyClearingDecisionIfDifferenceIsSmall(\$reusedPath, \$newPath, \$clearingDecision, \$row['uploadtree_pk']);
-       }
-       \$this->dbManager->freeResult(\$res);
-@@ -416,4 +426,3 @@
-     return \$mapped;
-   }
- }
--
 EOT
 cd -
 
