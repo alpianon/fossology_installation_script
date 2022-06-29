@@ -19,9 +19,13 @@ In case you change postgres DB password, you have to put the new DB password in 
 
 ## Phppgadmin
 
-In a previous version of the installation script, also phppgadmin was installed, in order to allow easier inspection of Fossology's database.
+Using phppgadmin may be useful in order to allow easier inspection of Fossology's database in case of issues, need of manual fixes etc.
 
-However, phpggadmin currently suffers of [security issues](https://github.com/phppgadmin/phppgadmin/issues/94), so the related part was commented out in the installation script. If you decide to install it anyway, because you are able to add a security layer to protect it, feel free uncomment that part.
+However, phpggadmin currently suffers of [security issues](https://github.com/phppgadmin/phppgadmin/issues/94), so the installation is made optional. If you want to enable it, you should do
+
+```bash
+FOSSY_ENABLE_PHPPGADMIN=1 ./install_fossology_on_debian_10.sh
+```
 
 ## Docker
 
