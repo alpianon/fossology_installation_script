@@ -5,14 +5,14 @@
 # Simple script to install Fossology from sources in Debian 9-10
 
 
-fossy_release="${FOSSOLOGY_RELEASE:-3.9.0}"
+fossy_release="${FOSSOLOGY_RELEASE:-4.1.0}"
 
 cp /etc/os-release .
 chmod +x os-release
 . "./os-release"
 rm os-release
-if [[ "$NAME $VERSION" != "Debian GNU/Linux 9 (stretch)" ]] && [[ "$NAME $VERSION" != "Debian GNU/Linux 10 (buster)" ]]; then
-  echo "This script must be run only in Debian 9 or 10"
+if [[ "$NAME $VERSION" != "Debian GNU/Linux 10 (buster)" ]]; then
+  echo "This script must be run only in Debian 10"
   exit 1
 fi
 
@@ -20,9 +20,6 @@ if [[ $EUID -ne 0 ]]; then
    echo "This script must be run as root" 1>&2
    exit 1
 fi
-
-# workaround for this Debian 10 issue https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=918754
-export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 echo ""
 echo ""
@@ -57,11 +54,6 @@ echo "*            COMPILING FOSSOLOGY...               *"
 echo "***************************************************"
 make
 
-echo "***************************************************"
-echo "*           UPDATING PHP COMPOSER...            *"
-echo "***************************************************"
-utils/install_composer.sh
-
 echo ""
 echo ""
 echo "***************************************************"
@@ -75,49 +67,62 @@ echo ""
 echo "***************************************************"
 echo "*              POST INSTALL STUFF...              *"
 echo "***************************************************"
+python3 -m pip install pip==21.2.2
 /usr/local/lib/fossology/fo-postinstall
 
 echo ""
 echo ""
 echo "***************************************************"
-echo "*    PATCHING EASYRDF TO IMPORT BIG SPDX FILES    *"
-echo "*    (bugfix backport from v1.1.1 to v.0.9.0)     *"
+echo "*    PATCHING REST API to correctly report        *"
+echo "*    job status                                   *"
 echo "***************************************************"
-cd /usr/local/share/fossology/vendor/easyrdf/easyrdf/lib/EasyRdf/Parser
+
+# the bug is this one:
+# https://github.com/fossology/fossology/issues/1800#issuecomment-712919785
+# It will be solved by a complete refactoring of job rest API in this PR:
+# https://github.com/fossology/fossology/pull/1955
+# In the meantime, we need to patch it while keeping the "old" rest API logic
+
+cd /usr/local/share/fossology/www/ui/api/Controllers/
 patch -p1 << EOT
---- a/RdfXml.php
-+++ b/RdfXml.php
-@@ -795,14 +795,22 @@
-         /* xml parser */
-         \$this->initXMLParser();
+--- a/JobController.php
++++ b/JobController.php
+@@ -228,24 +228,25 @@
+     \$status = "";
+     \$jobqueue = [];
 
--        /* parse */
--        if (!xml_parse(\$this->xmlParser, \$data, false)) {
--            \$message = xml_error_string(xml_get_error_code(\$this->xmlParser));
--            throw new EasyRdf_Parser_Exception(
--                'XML error: "' . \$message . '"',
--                xml_get_current_line_number(\$this->xmlParser),
--                xml_get_current_column_number(\$this->xmlParser)
--            );
-+        /* split into 1MB chunks, so XML parser can cope */
-+        \$chunkSize = 1000000;
-+        \$length = strlen(\$data);
-+        for (\$pos=0; \$pos < \$length; \$pos += \$chunkSize) {
-+            \$chunk = substr(\$data, \$pos, \$chunkSize);
-+            \$isLast = (\$pos + \$chunkSize > \$length);
-+
-+            /* Parse the chunk */
-+            if (!xml_parse(\$this->xmlParser, \$chunk, \$isLast)) {
-+                \$message = xml_error_string(xml_get_error_code(\$this->xmlParser));
-+                throw new Exception(
-+                    'XML error: "' . \$message . '"',
-+                    xml_get_current_line_number(\$this->xmlParser),
-+                    xml_get_current_column_number(\$this->xmlParser)
-+                );
-+            }
-         }
++    \$sql = "SELECT jq_pk from jobqueue WHERE jq_job_fk = \$1;";
++    \$statement = __METHOD__ . ".getJqpk";
++    \$rows = \$this->dbHelper->getDbManager()->getRows(\$sql, [\$job->getId()],
++      \$statement);
+     /* Check if the job has no upload like Maintenance job */
+     if (empty(\$job->getUploadId())) {
+-      \$sql = "SELECT jq_pk, jq_end_bits from jobqueue WHERE jq_job_fk = \$1;";
+-      \$statement = __METHOD__ . ".getJqpk";
+-      \$rows = \$this->dbHelper->getDbManager()->getRows(\$sql, [\$job->getId()],
+-        \$statement);
+       if (count(\$rows) > 0) {
+-        \$jobqueue[\$rows[0]['jq_pk']] = \$rows[0]['jq_end_bits'];
+-      }
+-    } else {
+-      \$jobqueue = \$jobDao->getAllJobStatus(\$job->getUploadId(),
+-        \$job->getUserId(), \$job->getGroupId());
++        \$jobqueue[] = \$rows[0]['jq_pk'];
++      }
++    } else {
++      foreach(\$rows as \$row) {
++        \$jobqueue[] = \$row['jq_pk'];
++      }
+     }
 
-         xml_parser_free(\$this->xmlParser);
+     \$job->setEta(\$this->getUploadEtaInSeconds(\$job->getId(),
+       \$job->getUploadId()));
+
+-    \$job->setStatus(\$this->getJobStatus(array_keys(\$jobqueue)));
++    \$job->setStatus(\$this->getJobStatus(\$jobqueue));
+   }
+
+   /**
 EOT
 cd -
 
