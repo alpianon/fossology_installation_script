@@ -20,6 +20,8 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
+set -e
+
 echo ""
 echo ""
 echo "***************************************************"
@@ -27,7 +29,7 @@ echo "*            INSTALLING SCRIPT DEPS...            *"
 echo "***************************************************"
 apt update
 apt install -y sudo build-essential git pkg-config libpq-dev libglib2.0-dev \
-  mc mawk sed software-properties-common lsb-release
+  mc mawk sed software-properties-common lsb-release python3-pip
 apt-add-repository non-free
 apt update
 apt install -y unrar
@@ -39,7 +41,6 @@ echo "*            CLONING FOSSOLOGY REPO...            *"
 echo "***************************************************"
 cd /
 git clone https://github.com/fossology/fossology.git
-set -e
 cd fossology/
 git checkout tags/$fossy_release
 
