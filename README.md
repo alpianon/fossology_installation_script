@@ -1,14 +1,14 @@
 <!--
 SPDX-License-Identifier: GPL-3.0-only
-SPDX-FileCopyrightText: 2020-2021 Alberto Pianon <pianon@array.eu>
+SPDX-FileCopyrightText: 2020-2022 Alberto Pianon <pianon@array.eu>
 -->
 
 
 # Fossology installation script
 
-Simple script to install Fossology 3.9.0 from sources in Debian 9 (Stretch) or 10 (Buster), and adjust server settings according to Fossology's [official documentation](https://github.com/fossology/fossology/wiki/Configuration-and-Tuning).
+Simple script to install Fossology 4.1.0 from sources in Debian 10 (Buster), and adjust server settings according to Fossology's [official documentation](https://github.com/fossology/fossology/wiki/Configuration-and-Tuning).
 
-Settings are tweaked and some dependency code is patched in order to enable Fossology to import huge spdx report files. Moreover, a known bug in job rest API is fixed, in order to get correct job status (see the comments in the script for more details).
+Settings are tweaked and some dependency code is patched in order to fix a known bug in rest API, in order to get correct job status (see the comments in the script for more details).
 
 After installation, you can access Fossology at https://{fossology_server_address}/repo.
 
@@ -17,7 +17,15 @@ Default user/password both for Fossology and for the Postgres DB are fossy/fossy
 You may want to change default password both in Fossology and in Postgres DB.
 In case you change postgres DB password, you have to put the new DB password in `/usr/local/etc/fossology/Db.conf`, otherwise Fossology will not work.
 
+## Phppgadmin
+
+In a previous version of the installation script, also phppgadmin was installed, in order to allow easier inspection of Fossology's database.
+
+However, phpggadmin currently suffers of [security issues](https://github.com/phppgadmin/phppgadmin/issues/94), so the related part was commented out in the installation script. If you decide to install it anyway, because you are able to add a security layer to protect it, feel free uncomment that part.
+
 ## Docker
+
+**(outdated, this part needs refactoring and testing)**
 
 The included `Dockerfile` and `docker-entrypoint.sh` files can be used to create a Fossology 3.9.0 docker image that has the same tweaks and patches that are provided by the installation script.
 
@@ -48,9 +56,3 @@ docker run -d \
   -p 443:443 \
   fossology_optimized
 ```
-
-## Phppgadmin
-
-In a previous version of the installation script, also phppgadmin was installed, in order to allow easier inspection of Fossology's database.
-
-However, phpggadmin currently suffers of [security issues](https://github.com/phppgadmin/phppgadmin/issues/94), so the related part was commented out in the installation script. If you decide to install it anyway, because you are able to add a security layer to protect it, feel free uncomment that part.
